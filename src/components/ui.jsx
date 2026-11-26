@@ -1,6 +1,14 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { AnimatePresence, motion, useAnimationControls } from 'motion/react';
-import { Check, Eye, EyeOff, Flame, Star, X } from 'lucide-react';
+import { getContent } from '../content/store';
+import { Bike, ChefHat, Check, Clock, Eye, EyeOff, Flame, Gift, Heart, Leaf, MapPin, Pizza, ShieldCheck, Smile, Sparkles, Star, Store, Timer, Truck, X } from 'lucide-react';
+
+/* Icons the admin can pick for editable content (kept to a curated set so the bundle stays small). */
+export const ICONS = { Timer, MapPin, Flame, ChefHat, Bike, Store, Truck, Clock, Pizza, Star, Gift, Heart, Leaf, ShieldCheck, Smile, Sparkles };
+export function Icon({ name, ...props }) {
+  const I = ICONS[name] || Sparkles;
+  return <I aria-hidden="true" {...props} />;
+}
 
 export const EASE = [0.2, 0.8, 0.2, 1];
 
@@ -18,7 +26,7 @@ export function Logo({ className = '', mono = false }) {
           <circle cx="23.5" cy="17" r="1.9" fill={mono ? '#006491' : '#fff'} />
         </g>
       </svg>
-      <span className="font-display text-[19px] font-extrabold uppercase tracking-tight">Domino’s</span>
+      <span className="font-display text-[19px] font-extrabold uppercase tracking-tight">{getContent().settings.brandName}</span>
     </span>
   );
 }

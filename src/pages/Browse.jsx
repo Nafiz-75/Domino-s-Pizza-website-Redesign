@@ -6,6 +6,9 @@ import { useApp } from '../state/AppState';
 import { AREAS, CATEGORIES, COUPONS, OFFERS, PRODUCTS, STORES, isStoreOpen } from '../data/menu';
 import { ProductCard } from '../components/Product';
 import { StoreCard } from '../components/Location';
+import { useContent } from '../content/store';
+
+const usePage = (id) => useContent().pages[id];
 
 export function PageHead({ eyebrow, title, sub, children }) {
   return (
@@ -26,17 +29,18 @@ export function Menu() {
   const [q, setQ] = useState('');
   const [veg, setVeg] = useState(false);
   const [sort, setSort] = useState('popular');
+  const page = usePage('menu');
 
   const list = useMemo(() => {
     const term = q.trim().toLowerCase();
     let l = PRODUCTS.filter((p) => (cat === 'all' || p.kind === cat) && (!veg || p.veg) && (!term || (p.name + ' ' + p.desc).toLowerCase().includes(term)));
     l = [...l].sort(sort === 'low' ? (a, b) => a.price - b.price : sort === 'high' ? (a, b) => b.price - a.price : sort === 'rating' ? (a, b) => b.rating - a.rating : (a, b) => a.pop - b.pop);
     return l;
-  }, [cat, q, veg, sort]);
+  }, [cat, q, veg, sort, PRODUCTS]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
-      <PageHead eyebrow="Menu" title="See it, then order it" sub="Every pizza can be resized, re-crusted and topped your way. Prices are for Medium unless noted." />
+      <PageHead {...page} />
       <div className="sticky top-[104px] z-30 border-y border-line-2 bg-white/90 backdrop-blur md:top-[64px] lg:top-[72px]">
         <div className="container-x flex flex-col gap-3 py-3 lg:flex-row lg:items-center">
           <div className="no-scrollbar -mx-1 flex gap-1 overflow-x-auto px-1" role="tablist" aria-label="Categories">
@@ -92,6 +96,7 @@ export function Menu() {
 
 export function Deals() {
   const { openItem, applyCoupon, toast, setCartOpen } = useApp();
+  const page = usePage('deals');
   const extra = Object.entries(COUPONS).filter(([c]) => !OFFERS.some((o) => o.code === c));
   const use = (code) => {
     applyCoupon(code);
@@ -100,7 +105,7 @@ export function Deals() {
   };
   return (
     <>
-      <PageHead eyebrow="Deals" title="Offers and promo codes" sub="Codes are checked in your cart. If an order doesn’t qualify yet, the cart tells you exactly what’s missing." />
+      <PageHead {...page} />
       <div className="container-x mt-10 grid gap-5 md:grid-cols-3">
         {OFFERS.map((o, n) => (
           <motion.article key={o.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: n * 0.07 }} className="card overflow-hidden">
@@ -134,15 +139,17 @@ export function Deals() {
 
 export function Stores() {
   const { choosePickup, toast } = useApp();
-  const [sel, setSel] = useState(STORES[0].id);
-  const s = STORES.find((x) => x.id === sel);
-  const areas = AREAS.filter((a) => a.store === sel);
+  const page = usePage('stores');
+  const [sel, setSel] = useState(STORES[0]?.id);
+  const s = STORES.find((x) => x.id === sel) || STORES[0];
+  if (!s) return <PageHead {...page} sub="No stores are listed right now." />;
+  const areas = AREAS.filter((a) => a.store === s.id);
   return (
     <>
-      <PageHead eyebrow="Stores" title="Find a Domino’s near you" sub="Every store delivers to the areas around it and takes carryout orders. Store list is illustrative." />
+      <PageHead {...page} />
       <div className="container-x mt-10 grid gap-6 lg:grid-cols-[1fr_1.2fr]">
         <div className="grid content-start gap-2.5">
-          {STORES.map((x) => <StoreCard key={x.id} s={x} selected={sel === x.id} onSelect={() => setSel(x.id)} />)}
+          {STORES.map((x) => <StoreCard key={x.id} s={x} selected={s.id === x.id} onSelect={() => setSel(x.id)} />)}
         </div>
         <motion.div key={s.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="card overflow-hidden lg:sticky lg:top-28 lg:self-start">
           <iframe title={`Map of ${s.name}`} className="h-[280px] w-full border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade"

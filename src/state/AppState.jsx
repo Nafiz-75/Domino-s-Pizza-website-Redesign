@@ -30,6 +30,8 @@ export const STAGES_PICKUP = [
 export function orderStage(order, now = Date.now()) {
   const stages = order.mode === 'pickup' ? STAGES_PICKUP : STAGES_DELIVERY;
   if (order.cancelled) return { stages, index: -1, cancelled: true };
+  /* a store/admin override from the dashboard wins over the timed simulation */
+  if (order.stageIndex != null) { const index = Math.min(order.stageIndex, stages.length - 1); return { stages, index, done: index === stages.length - 1 }; }
   /* scheduled orders start on the make-line one ETA before the chosen time */
   const start = order.when && order.when !== 'asap' ? Math.max(order.placedAt, new Date(order.when).getTime() - order.etaMin * 60_000) : order.placedAt;
   const secs = (now - start) / 1000;
@@ -68,7 +70,8 @@ export function AppProvider({ children }) {
     return () => window.removeEventListener('storage', onStorage);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const user = users.find((u) => u.id === sessionId) || null;
+  /* an account blocked from the admin dashboard is signed out */
+  const user = users.find((u) => u.id === sessionId && !u.blocked) || null;
 
   /* ---------- UI: toasts, cart drawer, location sheet ---------- */
   const [toasts, setToasts] = useState([]);
@@ -156,6 +159,7 @@ export function AppProvider({ children }) {
       throw new Error('That phone/email and password don’t match.');
     }
     delete failures.current[key];
+    if (u.blocked) throw new Error('This account is suspended. Contact the store for help.');
     setSessionId(u.id);
     return u;
   };
@@ -225,6 +229,7 @@ export function AppProvider({ children }) {
   /* ---------- cart ---------- */
   const addToCart = (id, opts = {}, qty = 1) => {
     const p = PRODUCT[id];
+    if (!p || p.soldOut) { toast('That item isn’t available right now.', 'error'); return; }
     const o = p.kind === 'pizza' ? { size: opts.size || 'medium', crust: opts.crust || 'tossed', toppings: opts.toppings || [] } : {};
     const key = lineKey(id, o);
     setCart((c) => {

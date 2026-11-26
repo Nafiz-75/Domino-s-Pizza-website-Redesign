@@ -3,13 +3,15 @@ import { Link, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { ChevronDown, Mail, MessageCircle, Phone } from 'lucide-react';
 import { useApp } from '../state/AppState';
-import { DELIVERY_FEE, FAQ, FREE_DELIVERY_OVER, PRODUCTS, STORES } from '../data/menu';
+import { FAQ, PRODUCTS, STORES } from '../data/menu';
+import { fill, useContent } from '../content/store';
 import { isBDPhone, isEmail } from '../lib/format';
 import { Field, VegMark } from '../components/ui';
 import { PageHead } from './Browse';
 
 export function Help() {
   const { toast, userOrders } = useApp();
+  const page = useContent().pages.help;
   const [open, setOpen] = useState(0);
   const [f, setF] = useState({ name: '', contact: '', order: '', topic: 'order', msg: '' });
   const [err, setErr] = useState({});
@@ -27,13 +29,13 @@ export function Help() {
   };
   return (
     <>
-      <PageHead eyebrow="Help" title="How can we help?" sub="Answers to the usual questions, and a direct line to a person if they don’t cover it." />
+      <PageHead {...page} />
       <div className="container-x mt-10 grid gap-8 lg:grid-cols-[1.2fr_1fr]">
         <section aria-labelledby="faq-h">
           <h2 id="faq-h" className="text-[22px] font-extrabold">Frequently asked</h2>
           <div className="mt-4 grid gap-2">
             {FAQ.map((q, n) => (
-              <div key={q.q} className="card overflow-hidden">
+              <div key={q.id} className="card overflow-hidden">
                 <button className="flex w-full items-center justify-between gap-4 p-5 text-left text-[15.5px] font-bold" aria-expanded={open === n} onClick={() => setOpen(open === n ? -1 : n)}>
                   {q.q}<motion.span animate={{ rotate: open === n ? 180 : 0 }}><ChevronDown size={20} className="text-blue-600" aria-hidden="true" /></motion.span>
                 </button>
@@ -48,8 +50,8 @@ export function Help() {
             ))}
           </div>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <a href={`tel:${STORES[0].phone.replace(/\D/g, '')}`} className="card flex items-center gap-3 p-4 hover:ring-blue-200"><Phone className="text-blue-600" aria-hidden="true" /><span><b className="block">Call a store</b><span className="text-[13px] text-ink-3">11:00 – 23:30 daily</span></span></a>
-            <Link to="/stores" className="card flex items-center gap-3 p-4 hover:ring-blue-200"><MessageCircle className="text-blue-600" aria-hidden="true" /><span><b className="block">Store numbers</b><span className="text-[13px] text-ink-3">All six stores</span></span></Link>
+            <a href={`tel:${(STORES[0]?.phone || '').replace(/\D/g, '')}`} className="card flex items-center gap-3 p-4 hover:ring-blue-200"><Phone className="text-blue-600" aria-hidden="true" /><span><b className="block">Call a store</b><span className="text-[13px] text-ink-3">{page.hours}</span></span></a>
+            <Link to="/stores" className="card flex items-center gap-3 p-4 hover:ring-blue-200"><MessageCircle className="text-blue-600" aria-hidden="true" /><span><b className="block">Store numbers</b><span className="text-[13px] text-ink-3">All {STORES.length} stores</span></span></Link>
           </div>
         </section>
         <section aria-labelledby="contact-h" className="card p-6 lg:self-start">
@@ -81,45 +83,27 @@ export function Help() {
   );
 }
 
-const DOCS = {
-  terms: { title: 'Terms of use', body: [
-    ['Orders', 'An order is confirmed when the store accepts it and you see an order number. Prices and availability can change until then.'],
-    ['Delivery', `Delivery is available inside each store’s zone. The fee is ৳${DELIVERY_FEE}, waived over ৳${FREE_DELIVERY_OVER}. Estimates are estimates; traffic and weather can add time.`],
-    ['Promo codes', 'One code per order. Codes have conditions shown in the cart and can’t be exchanged for cash.'],
-    ['Accounts', 'Keep your password private. You’re responsible for orders placed from your account.'],
-  ] },
-  privacy: { title: 'Privacy policy', body: [
-    ['What we collect', 'Name, mobile number, optional email, delivery addresses and order history — only what’s needed to make and deliver your food.'],
-    ['How it’s used', 'To fulfil orders, contact you about them, and (if you opt in) send offers. We don’t sell personal data.'],
-    ['Payments', 'Card and mobile-wallet payments are processed by licensed gateways. We never see or store full card numbers.'],
-    ['Your choices', 'Edit your profile, remove addresses, opt out of marketing or delete your account at any time from My account.'],
-    ['This prototype', 'Everything you enter on this concept site stays in your own browser’s local storage. Nothing is sent to a server. “Reset demo data” in the footer clears it.'],
-  ] },
-  refunds: { title: 'Refunds & complaints', body: [
-    ['Something wrong?', 'Report it from the order page or the Help page within 24 hours. A photo helps.'],
-    ['How refunds work', 'Approved refunds go back to the original payment method within 3–7 working days, or as a store credit if you prefer.'],
-    ['Cancellations', 'You can cancel until the store starts making your order. After that, call the store.'],
-  ] },
-};
-
 export function Legal() {
   const { doc } = useParams();
+  const c = useContent();
   if (doc === 'nutrition') return <Nutrition />;
-  const d = DOCS[doc] || DOCS.terms;
+  const d = c.legal.find((x) => x.id === doc) || c.legal[0];
+  if (!d) return <NotFound />;
   return (
     <>
-      <PageHead eyebrow="Policies" title={d.title} sub="Prototype copy for the redesign. Final wording comes from Domino’s Bangladesh legal." />
+      <PageHead eyebrow="Policies" title={d.title} sub={d.sub} />
       <article className="container-x mt-10 grid max-w-[760px] gap-6">
-        {d.body.map(([h, p]) => <section key={h}><h2 className="text-[20px] font-extrabold">{h}</h2><p className="mt-2 text-[15.5px] leading-relaxed text-ink-2">{p}</p></section>)}
+        {d.sections.map((x) => <section key={x.id}><h2 className="text-[20px] font-extrabold">{x.h}</h2><p className="mt-2 whitespace-pre-line text-[15.5px] leading-relaxed text-ink-2">{fill(x.p, c)}</p></section>)}
       </article>
     </>
   );
 }
 
 function Nutrition() {
+  const page = useContent().pages.nutrition;
   return (
     <>
-      <PageHead eyebrow="Nutrition" title="Nutrition & allergens" sub="Energy per slice for Medium hand-tossed pizzas, per portion for everything else. Prototype figures — the real table comes from the product spec sheets." />
+      <PageHead {...page} />
       <div className="container-x mt-10 overflow-x-auto">
         <table className="card w-full min-w-[620px] text-left text-[14.5px]">
           <caption className="sr-only">Nutrition and allergen information</caption>
@@ -141,12 +125,13 @@ function Nutrition() {
 }
 
 export function NotFound() {
+  const t = useContent().pages.notFound;
   return (
     <div className="container-x grid min-h-[60vh] place-items-center py-16 text-center">
       <div>
         <motion.p initial={{ rotate: -10, scale: 0.8 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: 'spring' }} className="font-display text-[96px] font-black leading-none text-blue-600">404</motion.p>
-        <h1 className="mt-2 text-[28px] font-black">This page went out for delivery</h1>
-        <p className="mt-2 text-ink-3">and didn’t come back. Let’s get you to something hot.</p>
+        <h1 className="mt-2 text-[28px] font-black">{t.title}</h1>
+        <p className="mt-2 text-ink-3">{t.sub}</p>
         <div className="mt-6 flex justify-center gap-2"><Link to="/" className="btn-ghost">Home</Link><Link to="/menu" className="btn-primary">See the menu</Link></div>
       </div>
     </div>

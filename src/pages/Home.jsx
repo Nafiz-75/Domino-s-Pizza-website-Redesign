@@ -1,33 +1,36 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion, useInView, useReducedMotion } from 'motion/react';
-import { ArrowRight, Bike, ChefHat, Flame, MapPin, Quote, Store, Timer } from 'lucide-react';
+import { ArrowRight, Bike, Quote, Store } from 'lucide-react';
 import { useApp } from '../state/AppState';
 import { CATEGORIES, HERO_PIZZAS, OFFERS, PRODUCTS, REVIEWS } from '../data/menu';
 import { taka } from '../lib/format';
 import { ProductCard } from '../components/Product';
-import { EASE, Rating, VegMark } from '../components/ui';
-
-const ROTATE_MS = 4500;
+import { EASE, Icon, Rating, VegMark } from '../components/ui';
+import { fill, useContent } from '../content/store';
 
 /* Hero: the featured pizza changes on its own every few seconds. Pauses on
    hover/focus, when the tab is hidden or the hero is off screen; picking a
    pizza restarts the timer. Off entirely for reduced-motion users. */
 function Hero() {
   const { openItem, setLocationOpen, setMode, fulfil } = useApp();
+  const c = useContent();
+  const h = c.home.hero;
+  const ROTATE_MS = c.settings.heroRotateMs;
   const reduce = useReducedMotion();
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
   const ref = useRef(null);
   const inView = useInView(ref, { amount: 0.3 });
-  const p = HERO_PIZZAS[i];
+  const p = HERO_PIZZAS[i % HERO_PIZZAS.length];
   const running = !reduce && !paused && inView;
 
   useEffect(() => {
     if (!running) return;
     const t = setTimeout(() => { if (!document.hidden) setI((x) => (x + 1) % HERO_PIZZAS.length); }, ROTATE_MS);
     return () => clearTimeout(t);
-  }, [i, running]);
+  }, [i, running, ROTATE_MS]);
+  if (!p) return null;
 
   return (
     <section ref={ref} className="relative overflow-hidden bg-blue-600 text-white" aria-roledescription="carousel" aria-label="Featured pizzas">
@@ -37,25 +40,23 @@ function Hero() {
       <div className="pointer-events-none absolute -right-40 -top-40 h-[560px] w-[560px] rounded-full bg-blue-500/60 blur-3xl" aria-hidden="true" />
       <div className="container-x relative grid items-center gap-10 py-12 md:py-16 lg:grid-cols-[1.05fr_1fr] lg:py-20">
         <div>
-          <motion.p className="font-bn text-[17px] font-semibold text-cheese" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>গরম, তাজা, ৩০ মিনিটে</motion.p>
+          <motion.p className="font-bn text-[17px] font-semibold text-cheese" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>{h.kicker}</motion.p>
           <motion.h1 className="mt-3 text-[44px] font-black leading-[.95] sm:text-[64px] lg:text-[76px]" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, ease: EASE, duration: 0.6 }}>
-            Hot, fresh,<br /><span className="text-white/90">at your door</span><br />in 30 minutes.
+            {h.title.split(/\n/).map((l, n, a) => <span key={n} className={n === 1 ? 'text-white/90' : ''}>{l}{n < a.length - 1 && <br />}</span>)}
           </motion.h1>
           <motion.p className="mt-5 max-w-[46ch] text-[16.5px] leading-relaxed text-blue-100" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
-            Hand-stretched dough, sauce from vine tomatoes and 100% mozzarella. Order for delivery across Dhaka, or pick up on your way home.
+            {h.sub}
           </motion.p>
           <motion.div className="mt-8 flex flex-wrap gap-3" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
             <button className="btn-primary h-13 px-6 text-[16px]" onClick={() => { setMode('delivery'); if (!fulfil.address) setLocationOpen(true); else document.getElementById('popular')?.scrollIntoView(); }}>
-              <Bike size={19} aria-hidden="true" /> Order delivery
+              <Bike size={19} aria-hidden="true" /> {h.ctaDelivery}
             </button>
             <button className="btn h-13 bg-white px-6 text-[16px] text-blue-700 hover:bg-blue-50" onClick={() => { setMode('pickup'); setLocationOpen(true); }}>
-              <Store size={19} aria-hidden="true" /> Carryout
+              <Store size={19} aria-hidden="true" /> {h.ctaCarryout}
             </button>
           </motion.div>
           <ul className="mt-10 flex flex-wrap gap-x-7 gap-y-3 text-[14px] text-blue-100">
-            <li className="flex items-center gap-2"><Timer size={17} aria-hidden="true" /> Live delivery estimate</li>
-            <li className="flex items-center gap-2"><MapPin size={17} aria-hidden="true" /> 6 stores across Dhaka</li>
-            <li className="flex items-center gap-2"><Flame size={17} aria-hidden="true" /> Baked at 250 °C</li>
+            {h.bullets.map((b) => <li key={b.id} className="flex items-center gap-2"><Icon name={b.icon} size={17} /> {fill(b.text, c)}</li>)}
           </ul>
         </div>
 
@@ -110,10 +111,12 @@ function Hero() {
 
 function Offers() {
   const { openItem } = useApp();
+  const t = useContent().home.offers;
+  if (!OFFERS.length) return null;
   return (
     <section className="container-x mt-14" aria-labelledby="offers-h">
       <div className="flex items-end justify-between gap-4">
-        <div><p className="eyebrow">This week</p><h2 id="offers-h" className="mt-1 text-[30px] font-extrabold sm:text-[36px]">Deals worth ordering for</h2></div>
+        <div><p className="eyebrow">{t.eyebrow}</p><h2 id="offers-h" className="mt-1 text-[30px] font-extrabold sm:text-[36px]">{t.title}</h2></div>
         <Link to="/deals" className="btn-link shrink-0">All deals <ArrowRight size={16} /></Link>
       </div>
       <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -139,10 +142,11 @@ function Offers() {
 }
 
 function Categories() {
+  const t = useContent().home.categories;
   const tiles = CATEGORIES.filter((c) => c.id !== 'all').map((c) => ({ ...c, p: PRODUCTS.find((p) => p.kind === c.id) }));
   return (
     <section className="container-x mt-16" aria-labelledby="cat-h">
-      <h2 id="cat-h" className="text-[24px] font-extrabold">What are you in the mood for?</h2>
+      <h2 id="cat-h" className="text-[24px] font-extrabold">{t.title}</h2>
       <div className="no-scrollbar mt-5 flex gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-5">
         {tiles.map((t, n) => (
           <motion.div key={t.id} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: n * 0.05 }}>
@@ -160,11 +164,12 @@ function Categories() {
 }
 
 function Popular() {
-  const list = [...PRODUCTS].sort((a, b) => a.pop - b.pop).slice(0, 8);
+  const t = useContent().home.popular;
+  const list = [...PRODUCTS].sort((a, b) => a.pop - b.pop).slice(0, t.count);
   return (
     <section id="popular" className="container-x mt-16 scroll-mt-28" aria-labelledby="pop-h">
       <div className="flex items-end justify-between gap-4">
-        <div><p className="eyebrow">Most ordered in Dhaka</p><h2 id="pop-h" className="mt-1 text-[30px] font-extrabold sm:text-[36px]">Bestsellers</h2></div>
+        <div><p className="eyebrow">{t.eyebrow}</p><h2 id="pop-h" className="mt-1 text-[30px] font-extrabold sm:text-[36px]">{t.title}</h2></div>
         <Link to="/menu" className="btn-link shrink-0">Full menu <ArrowRight size={16} /></Link>
       </div>
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -175,23 +180,19 @@ function Popular() {
 }
 
 function HowItWorks() {
-  const steps = [
-    { icon: MapPin, t: 'Tell us where', d: 'Add your address once. We match it to the nearest store and show a real delivery time.' },
-    { icon: ChefHat, t: 'We make it fresh', d: 'Your ticket hits the make-line instantly. Dough is stretched and topped to order.' },
-    { icon: Bike, t: 'Watch it arrive', d: 'Follow each step live, from oven to rider to your door, with a heat-locked bag.' },
-  ];
+  const t = useContent().home.how;
   return (
     <section className="container-x mt-20" aria-labelledby="how-h">
       <div className="rounded-[32px] bg-white p-8 shadow-card ring-1 ring-line/70 sm:p-12">
-        <p className="eyebrow">How ordering works</p>
-        <h2 id="how-h" className="mt-1 max-w-[18ch] text-[30px] font-extrabold sm:text-[36px]">Three taps from hungry to handed over</h2>
+        <p className="eyebrow">{t.eyebrow}</p>
+        <h2 id="how-h" className="mt-1 max-w-[18ch] text-[30px] font-extrabold sm:text-[36px]">{t.title}</h2>
         <ol className="mt-10 grid gap-8 md:grid-cols-3">
-          {steps.map((s, n) => (
-            <motion.li key={s.t} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: n * 0.1, ease: EASE, duration: 0.5 }} className="relative">
-              <span className="grid h-14 w-14 place-items-center rounded-2xl bg-blue-600 text-white"><s.icon size={26} aria-hidden="true" /></span>
+          {t.steps.map((s, n) => (
+            <motion.li key={s.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: n * 0.1, ease: EASE, duration: 0.5 }} className="relative">
+              <span className="grid h-14 w-14 place-items-center rounded-2xl bg-blue-600 text-white"><Icon name={s.icon} size={26} /></span>
               <span className="absolute left-16 top-3 font-display text-[48px] font-black leading-none text-blue-50" aria-hidden="true">0{n + 1}</span>
-              <h3 className="mt-5 text-[19px] font-extrabold">{s.t}</h3>
-              <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-3">{s.d}</p>
+              <h3 className="mt-5 text-[19px] font-extrabold">{s.title}</h3>
+              <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-3">{s.text}</p>
             </motion.li>
           ))}
         </ol>
@@ -201,15 +202,17 @@ function HowItWorks() {
 }
 
 function Reviews() {
+  const t = useContent().home.reviews;
+  if (!REVIEWS.length) return null;
   return (
     <section className="container-x mt-20" aria-labelledby="rev-h">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div><p className="eyebrow">Reviews</p><h2 id="rev-h" className="mt-1 text-[30px] font-extrabold sm:text-[36px]">What Dhaka says</h2></div>
-        <p className="text-[14px] text-ink-3"><b className="text-[22px] text-ink">4.6</b> / 5 from 8,430 rated orders <span className="text-[12px]">(sample data)</span></p>
+        <div><p className="eyebrow">{t.eyebrow}</p><h2 id="rev-h" className="mt-1 text-[30px] font-extrabold sm:text-[36px]">{t.title}</h2></div>
+        <p className="text-[14px] text-ink-3"><b className="text-[22px] text-ink">{t.score}</b> {t.note}</p>
       </div>
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {REVIEWS.map((r, n) => (
-          <motion.figure key={r.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: n * 0.08 }} className="card p-6">
+          <motion.figure key={r.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: n * 0.08 }} className="card p-6">
             <Quote size={26} className="text-red-500" aria-hidden="true" />
             <blockquote className="mt-3 text-[15.5px] leading-relaxed text-ink-2">{r.text}</blockquote>
             <figcaption className="mt-4 text-[14px]"><b>{r.name}</b> <span className="text-ink-3">· {r.where}</span></figcaption>
@@ -220,15 +223,10 @@ function Reviews() {
   );
 }
 
+const SECTIONS = { hero: Hero, offers: Offers, categories: Categories, popular: Popular, how: HowItWorks, reviews: Reviews };
+
+/* Section order and visibility come from the admin (Content → Home page). */
 export default function Home() {
-  return (
-    <>
-      <Hero />
-      <Offers />
-      <Categories />
-      <Popular />
-      <HowItWorks />
-      <Reviews />
-    </>
-  );
+  const { sections } = useContent().home;
+  return sections.filter((s) => s.show && SECTIONS[s.id]).map((s) => { const S = SECTIONS[s.id]; return <S key={s.id} />; });
 }

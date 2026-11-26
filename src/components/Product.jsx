@@ -15,6 +15,7 @@ export function ProductCard({ product, index = 0 }) {
       whileHover={{ y: -4 }} className="card group flex flex-col overflow-hidden">
       <button onClick={() => openItem(product.id)} className="relative block aspect-[4/3] overflow-hidden text-left" aria-label={`${product.name}, see details`}>
         <Photo product={product} className="h-full w-full transition-transform duration-500 group-hover:scale-[1.05]" />
+        {product.soldOut && <span className="absolute inset-0 grid place-items-center bg-white/60 text-[15px] font-extrabold uppercase tracking-wider text-ink">Sold out</span>}
         {product.tags[0] && <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11.5px] font-bold text-red-600 shadow-sm">{product.tags[0]}</span>}
       </button>
       <div className="flex flex-1 flex-col p-4">
@@ -30,7 +31,9 @@ export function ProductCard({ product, index = 0 }) {
             {isPizza && <span className="block text-[11.5px] font-semibold text-ink-3">Medium from</span>}
             <span className="text-[18px] font-extrabold text-ink">{taka(product.price)}</span>
           </div>
-          {isPizza ? (
+          {product.soldOut ? (
+            <span className="text-[13px] font-semibold text-ink-3">Back soon</span>
+          ) : isPizza ? (
             <button onClick={() => openItem(product.id)} className="btn-primary h-10 px-4 text-[14px]">Customise</button>
           ) : (
             <motion.button whileTap={{ scale: 0.9 }} onClick={() => addToCart(product.id)} className="btn-primary h-10 px-4 text-[14px]" aria-label={`Add ${product.name}`}>
@@ -159,8 +162,8 @@ export function ItemSheet() {
 
       <div className="flex items-center gap-3 border-t border-line-2 bg-white px-5 py-4 sm:px-6">
         {!editing && <Qty value={qty} onChange={(v) => setQty(Math.max(1, v))} min={1} label={product.name} />}
-        <button onClick={submit} className="btn-primary h-12 flex-1 text-[15.5px]">
-          {editing ? 'Update item' : 'Add to order'} ·
+        <button onClick={submit} disabled={product.soldOut} className="btn-primary h-12 flex-1 text-[15.5px]">
+          {product.soldOut ? 'Sold out' : editing ? 'Update item' : 'Add to order'} ·
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.span key={unit * (editing ? 1 : qty)} initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -12, opacity: 0 }}>
               {taka(unit * (editing ? 1 : qty))}

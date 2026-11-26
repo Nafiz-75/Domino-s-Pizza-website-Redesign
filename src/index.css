@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* scan src/ even when the admin is built with admin/ as its root */
+@source "./";
 
 /* Colour system taken from the Domino's logo: tile blue, tile red, white pips.
    Blue carries navigation and trust; red is reserved for the one action that
@@ -72,3 +74,39 @@
 
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ---------- Admin dashboard ----------
+   Same brand tokens as the shop (blue for navigation, red for the one
+   primary action), on neutral surfaces. Light by default; dark is a
+   charcoal ramp rather than pure black, so cards still read as layers. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-app: var(--a-app);
+  --color-panel: var(--a-panel);
+  --color-raised: var(--a-raised);
+  --color-edge: var(--a-edge);
+  --color-fg: var(--a-fg);
+  --color-dim: var(--a-dim);
+  --color-brand: var(--a-brand);
+}
+.admin {
+  --a-app: #f4f6f8; --a-panel: #ffffff; --a-raised: #eef2f5; --a-edge: #e1e7ec;
+  --a-fg: #0d1b24; --a-dim: #5f7280; --a-brand: var(--color-blue-600);
+  color-scheme: light;
+}
+.admin.dark {
+  --a-app: #121416; --a-panel: #1a1d20; --a-raised: #23272b; --a-edge: #2e3338;
+  --a-fg: #e8ebed; --a-dim: #98a2aa; --a-brand: #4fa6d6;
+  color-scheme: dark;
+}
+.admin ::selection { background: color-mix(in oklab, var(--a-brand) 30%, transparent); }
+.admin :focus-visible { outline-color: var(--a-brand); }
+
+@utility a-card { @apply rounded-2xl bg-panel ring-1 ring-edge; }
+@utility a-input { @apply w-full h-10 rounded-xl bg-app px-3 text-[14px] text-fg ring-1 ring-edge placeholder:text-dim/70 outline-none transition-shadow focus:ring-2 focus:ring-brand; }
+@utility a-btn { @apply inline-flex shrink-0 whitespace-nowrap items-center justify-center gap-2 rounded-xl px-3.5 h-9 text-[13.5px] font-semibold transition-colors active:scale-[.98] disabled:opacity-50 select-none; }
+@utility a-btn-primary { @apply a-btn bg-red-500 text-white hover:bg-red-600; }
+@utility a-btn-ghost { @apply a-btn bg-panel text-fg ring-1 ring-edge hover:bg-raised; }
+@utility a-btn-quiet { @apply a-btn text-dim hover:bg-raised hover:text-fg; }
+@utility a-label { @apply block text-[12.5px] font-semibold text-dim mb-1.5; }

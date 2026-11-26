@@ -6,20 +6,18 @@ import { useApp } from '../state/AppState';
 import { areaById, storeById } from '../data/menu';
 import { prettyPhone, taka } from '../lib/format';
 import { Logo } from './ui';
+import { useContent } from '../content/store';
 
-const NAV = [
-  { to: '/menu', label: 'Menu' },
-  { to: '/deals', label: 'Deals' },
-  { to: '/stores', label: 'Stores' },
-  { to: '/track', label: 'Track order' },
-];
+const useNav = () => useContent().nav.filter((n) => n.show);
 
 export function ConceptBanner() {
+  const b = useContent().banner;
+  if (!b.show) return null;
   return (
     <div className="bg-blue-950 text-[12.5px] text-blue-100">
       <div className="container-x flex items-center justify-center gap-2 py-1.5 text-center">
         <Info size={14} className="shrink-0" aria-hidden="true" />
-        <span><span className="sm:hidden">Unofficial concept · demo orders & accounts only</span><span className="max-sm:hidden">Unofficial redesign concept for Domino’s Bangladesh. Orders, payments and accounts are simulated and stay in this browser.</span></span>
+        <span><span className="sm:hidden">{b.short}</span><span className="max-sm:hidden">{b.text}</span></span>
       </div>
     </div>
   );
@@ -50,6 +48,7 @@ export function LocationChip({ compact = false }) {
 
 export function Header() {
   const { totals, setCartOpen, user } = useApp();
+  const NAV = useNav();
   const [menu, setMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
@@ -118,31 +117,28 @@ export function Header() {
 
 export function Footer() {
   const { resetDemo } = useApp();
-  const cols = [
-    { h: 'Order', links: [['Menu', '/menu'], ['Deals', '/deals'], ['Track an order', '/track'], ['Find a store', '/stores']] },
-    { h: 'Account', links: [['Sign in', '/signin'], ['Create account', '/signup'], ['My orders', '/account/orders'], ['Saved addresses', '/account/addresses']] },
-    { h: 'Help', links: [['FAQ & contact', '/help'], ['Nutrition & allergens', '/legal/nutrition'], ['Refund policy', '/legal/refunds'], ['Terms', '/legal/terms'], ['Privacy', '/legal/privacy']] },
-  ];
+  const f = useContent().footer;
   return (
     <footer className="mt-24 bg-blue-900 text-blue-100">
-      <div className="container-x grid gap-10 py-14 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+      <div className="container-x grid gap-10 py-14 md:grid-cols-[1.4fr_repeat(var(--cols),1fr)]" style={{ '--cols': f.columns.length }}>
         <div>
           <Logo mono className="text-white" />
-          <p className="mt-4 max-w-[34ch] text-[14px] leading-relaxed text-blue-200">Hot, fresh pizza across Dhaka. Order online for delivery in about 30 minutes, or pick up from your nearest store.</p>
-          <p className="mt-4 text-[13px] text-blue-200">Store hours 11:00 – 23:30 · Prices include VAT</p>
+          <p className="mt-4 max-w-[34ch] text-[14px] leading-relaxed text-blue-200">{f.about}</p>
+          <p className="mt-4 text-[13px] text-blue-200">{f.hours}</p>
         </div>
-        {cols.map((c) => (
-          <div key={c.h}>
-            <h2 className="font-sans text-[13px] font-bold uppercase tracking-[.14em] text-white">{c.h}</h2>
+        {f.columns.map((c) => (
+          <div key={c.id}>
+            <h2 className="font-sans text-[13px] font-bold uppercase tracking-[.14em] text-white">{c.title}</h2>
             <ul className="mt-4 grid gap-2.5 text-[14.5px]">
-              {c.links.map(([l, to]) => <li key={to}><Link to={to} className="hover:text-white hover:underline underline-offset-4">{l}</Link></li>)}
+              {c.links.map((l) => <li key={l.id}><Link to={l.to} className="hover:text-white hover:underline underline-offset-4">{l.label}</Link></li>)}
             </ul>
           </div>
         ))}
       </div>
       <div className="border-t border-white/10">
         <div className="container-x flex flex-col gap-3 py-5 text-[12.5px] text-blue-200 md:flex-row md:items-center md:justify-between">
-          <p>Unofficial portfolio concept — not affiliated with or endorsed by Domino’s. Domino’s® name and marks belong to Domino’s IP Holder LLC. Prices, stores and offers shown are illustrative.</p>
+          <p>{f.legal}</p>
+          {import.meta.env.DEV && <a href="./admin/" className="shrink-0 font-semibold text-white underline underline-offset-4">Admin dashboard</a>}
           <button onClick={() => { if (confirm('Clear all demo accounts, orders and cart from this browser?')) resetDemo(); }} className="shrink-0 font-semibold text-white underline underline-offset-4">Reset demo data</button>
         </div>
       </div>

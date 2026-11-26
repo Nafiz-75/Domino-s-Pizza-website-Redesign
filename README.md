@@ -44,7 +44,7 @@ Every prototype-only piece is isolated so it can be swapped for Domino's systems
 
 | Prototype | Production |
 |---|---|
-| `src/data/menu.js` (menu, prices, stores, zones, coupons) | Menu / pricing / store-locator / promotions APIs |
+| `src/content/store.js` (all site content, edited in the separate admin page at `/admin/`, see ADMIN.md) | CMS / content API with draft, publish and versions |
 | `src/lib/storage.js` (localStorage) | Customer, address and order services |
 | `src/lib/crypto.js` + OTP shown on screen | Auth service: server-side password hashing, SMS gateway for OTP, rate limiting, sessions/JWT |
 | Payment step (no details collected) | SSLCommerz / bKash / Nagad checkout redirects + webhooks |

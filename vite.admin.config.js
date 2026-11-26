@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 /* Standalone admin site (its own GitHub Pages repo). Output: dist-admin/ with
    index.html at the top. It reads shop images and opens the preview from the
    shop site, which shares the same origin (nafiz-75.github.io). */
-const SITE = process.env.SITE_URL || '/Domino-s-Pizza/';
+const SITE = process.env.SITE_URL || '/Domino-s-Pizza-website-Redesign/';
 
 export default defineConfig({
   root: 'admin',

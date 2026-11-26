@@ -3,7 +3,8 @@
 The dashboard is a **separate page** at **`/admin/`**:
 
 - local: `npm run dev` → `http://localhost:5173/admin/`
-- live (after deploying): `https://nafiz-75.github.io/Domino-s-Pizza/admin/`
+- live, own site: **https://nafiz-75.github.io/Domino-s-Pizza-Admin/** (repo `Nafiz-75/Domino-s-Pizza-Admin`, built with `npm run build:admin`)
+- live, inside the shop: `https://nafiz-75.github.io/Domino-s-Pizza-website-Redesign/admin/`
 
 It is its own HTML entry (`admin/index.html` → `src/admin/main.jsx`), so shop visitors never load it. It sits on the same domain as the shop on purpose, because that is how the two share data in this serverless build. Old `#/admin` links redirect here. The first visit asks you to set a passcode for that browser.
 
@@ -29,6 +30,15 @@ It is its own HTML entry (`admin/index.html` → `src/admin/main.jsx`), so shop 
 | System | Settings · Publish & versions | Brand colours, logo name, SEO, delivery fee/thresholds, topping limit, carousel speed, maintenance mode, publish/discard, version restore, JSON export/import, reset |
 
 Workflow: edit → see it in **Preview** (side pane, desktop/mobile) → **Publish**. Nothing reaches visitors before publishing.
+
+## Deploy
+
+```bash
+npm run build          # shop (+ /admin/) → dist/        → gh-pages branch of Domino-s-Pizza-website-Redesign
+npm run build:admin    # admin only      → dist-admin/  → main branch of Domino-s-Pizza-Admin
+```
+
+Both sites are on `nafiz-75.github.io`, the same origin, so the standalone admin edits the shop's browser data. If the shop repo is renamed, update `SITE` in `vite.admin.config.js`.
 
 ## Files
 

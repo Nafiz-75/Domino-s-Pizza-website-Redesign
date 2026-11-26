@@ -4,7 +4,8 @@
 A complete, clickable ordering experience: browse → customise → cart → address → checkout → live tracking → account.
 Everything runs in the browser; no real orders, payments or accounts are created.
 
-Live demo: https://nafiz-75.github.io/Domino-s-Pizza/
+Live demo: https://nafiz-75.github.io/Domino-s-Pizza-website-Redesign/  
+Admin dashboard: https://nafiz-75.github.io/Domino-s-Pizza-Admin/ (see ADMIN.md)
 
 ## What's in it
 
